@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Private Gallery</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0a0f;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+  header{padding:30px 20px;text-align:center;background:linear-gradient(135deg,#1a1a2e,#16213e);position:sticky;top:0;z-index:10}
+  header h1{margin:0;font-size:28px;letter-spacing:1px}
+  header p{color:#888;margin:5px 0 0;font-size:14px}
+  #timer{color:#ffd166;font-weight:bold;margin-top:10px;min-height:20px}
+  .container{max-width:900px;margin:0 auto;padding:20px}
+  .group{background:#15151f;border:1px solid #222;border-radius:20px;padding:20px;margin-bottom:25px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+  .group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+  .group-head h2{margin:0;font-size:20px}
+  .badge{background:#2a2a3a;padding:5px 12px;border-radius:20px;font-size:12px;color:#aaa}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:15px;filter:blur(22px) brightness(0.6);transition:all .6s ease;pointer-events:none;user-select:none}
+  .grid img.unlocked{filter:blur(0) brightness(1);pointer-events:auto}
+  .lock-screen{text-align:center;padding:20px}
+  .btn{background:#fff;color:#000;border:none;padding:12px 28px;border-radius:30px;font-weight:700;font-size:15px;cursor:pointer;transition:.3s}
+  .btn:hover{transform:scale(1.05)}
+  footer{text-align:center;color:#555;padding:30px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔒 My Private Gallery</h1>
+  <p>Groups auto-lock after 3 minutes</p>
+  <div id="timer"></div>
+</header>
+<div class="container" id="gallery"></div>
+<footer>Hosted on GitHub Pages • Private</footer>
+<script>
+/* ★★★ EDIT ONLY THIS SECTION ★★★ */
+const GROUPS = [
+  {
+    id: "group1",
+    name: "⛏️ Minecraft World",
+    password: "pass123",
+    images: [
+      "group1/img1.jpg",
+      "group1/img2.jpg",
+      "group1/img3.jpg",
+    ]
+  },
+  {
+    id: "group2",
+    name: "🎂 Family",
+    password: "mysecret",
+    images: [
+      "group2/img1.jpg",
+    ]
+  },
+];
+/* ★★★ DO NOT EDIT BELOW ★★★ */
+const gallery = document.getElementById('gallery');
+const timerEl = document.getElementById('timer');
+let lockTimers = {};
+function render() {
+  gallery.innerHTML = '';
+  GROUPS.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'group'; div.id = g.id;
+    div.innerHTML = `
+      <div class="group-head"><h2>${g.name}</h2><span class="badge" id="badge-${g.id}">🔒 Locked</span></div>
+      <div class="grid">${g.images.map(src => `<img src="${src}" loading="lazy">`).join('')}</div>
+      <div class="lock-screen"><button class="btn" onclick="unlockGroup('${g.id}')">Unlock ${g.name}</button></div>`;
+    gallery.appendChild(div);
+  });
+}
+function unlockGroup(groupId) {
+  const group = GROUPS.find(g => g.id === groupId);
+  const pass = prompt(`Enter password for ${group.name}:`);
+  if (pass !== group.password) return alert("❌ Wrong password");
+  const imgs = document.querySelectorAll(`#${groupId} img`);
+  imgs.forEach(i => i.classList.add('unlocked'));
+  document.getElementById(`badge-${groupId}`).innerText = "🔓 Unlocked";
+  clearTimeout(lockTimers[groupId].timeout); clearInterval(lockTimers[groupId].interval);
+  let left = 180; lockTimers[groupId] = {};
+  lockTimers[groupId].interval = setInterval(() => {
+    left--; timerEl.innerText = `${group.name} locks in ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
+    if (left <= 0) clearInterval(lockTimers[groupId].interval);
+  }, 1000);
+  lockTimers[groupId].timeout = setTimeout(() => {
+    imgs.forEach(i => i.classList.remove('unlocked'));
+    document.getElementById(`badge-${groupId}`).innerText = "🔒 Locked";
+    timerEl.innerText = `${group.name} locked again`;
+  }, 180000);
+}
+GROUPS.forEach(g => lockTimers[g.id] = {});
+render();
+</script>
+</body>
+</html>
